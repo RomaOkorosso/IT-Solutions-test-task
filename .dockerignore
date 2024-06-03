@@ -1,0 +1,5 @@
+.dockerignore
+.git
+.idea
+__pycache__
+data/pg_data/*
