@@ -3,12 +3,11 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.requests import Request
 from logger import logger
 from app.src.auth import schemas, service, models, crud
 from app.src.auth.crud import crud_token
 from app.src.auth.models import Token
-from app.src.base import get_session, settings
+from app.src.base import get_session
 from app.src.base.exceptions import WeakPassword
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -16,13 +15,15 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 async def get_user(
-        token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)
+    token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)
 ) -> schemas.UserInDB:
     logger.log(f"token ={token}")
     return await crud.crud_user.get_by_access_token(session=session, token=token)
 
 
-async def get_authed_user(user: schemas.UserInDB = Depends(get_user)) -> schemas.UserInDB:
+async def get_authed_user(
+    user: schemas.UserInDB = Depends(get_user),
+) -> schemas.UserInDB:
     if not user:
         raise HTTPException(status_code=403, detail="Not authorized")
     return user
@@ -30,11 +31,11 @@ async def get_authed_user(user: schemas.UserInDB = Depends(get_user)) -> schemas
 
 @router.post("/register")
 async def register(
-        full_name: str = Form(...),
-        email: str = Form(...),
-        username: str = Form(...),
-        password: str = Form(...),
-        session: AsyncSession = Depends(get_session),
+    full_name: str = Form(...),
+    email: str = Form(...),
+    username: str = Form(...),
+    password: str = Form(...),
+    session: AsyncSession = Depends(get_session),
 ):
     logger.log(f"{datetime.now()} - (auth.routes) Register post")
     try:
@@ -68,8 +69,8 @@ async def register(
 
 @router.post("/login")
 async def login_post(
-        form_data: OAuth2PasswordRequestForm = Depends(),
-        session: AsyncSession = Depends(get_session),
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: AsyncSession = Depends(get_session),
 ):
     logger.log(f"{datetime.now()} - (auth.routes) Login post")
     user = await service.auth_service.authenticate_user(
@@ -94,7 +95,7 @@ async def login_post(
 
 @router.post("/token")
 async def login_by_token(
-        token: schemas.TokenBase, session: AsyncSession = Depends(get_session)
+    token: schemas.TokenBase, session: AsyncSession = Depends(get_session)
 ) -> schemas.UserInDB:
     try:
         token = await service.crud_token.get_by_access_token(

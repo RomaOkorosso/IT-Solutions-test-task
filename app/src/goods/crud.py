@@ -10,7 +10,9 @@ from logger import logger
 
 
 class CRUDGood(CRUDBase[Good, GoodCreate, GoodUpdate]):
-    async def get_by_headline(self, session: AsyncSession, headline: str) -> Good or None:
+    async def get_by_headline(
+        self, session: AsyncSession, headline: str
+    ) -> Good or None:
         """
         get one of ad/good by article/headline
 
@@ -26,7 +28,9 @@ class CRUDGood(CRUDBase[Good, GoodCreate, GoodUpdate]):
                 )
             ).scalar_one_or_none()
         except Exception as err:
-            logger.log(f"{datetime.datetime.now()} - err while get good by headline - {err}")
+            logger.log(
+                f"{datetime.datetime.now()} - err while get good by headline - {err}"
+            )
             return None  # TODO rewrite to normal behavior (raise err)
         return db_good
 
@@ -38,7 +42,9 @@ class CRUDGood(CRUDBase[Good, GoodCreate, GoodUpdate]):
         :return: models.Good
         """
         logger.log(f"{datetime.datetime.now()} - try to create or pass {obj_in}")
-        db_good = await crud_good.get_by_headline(session=session, headline=obj_in.headline)
+        db_good = await crud_good.get_by_headline(
+            session=session, headline=obj_in.headline
+        )
         if db_good is None:
             try:
                 db_good = await crud_good.create(db=session, obj_in=obj_in)

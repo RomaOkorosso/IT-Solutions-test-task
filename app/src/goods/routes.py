@@ -5,14 +5,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from logger import logger
 from app.src.goods import crud, schemas, service
 from app.src.auth import schemas as auth_schemas, routes as auth_routes
-from app.src.base import get_session, settings
+from app.src.base import get_session
 
 router = APIRouter(prefix="/goods", tags=["goods"])
 
 
 @router.get("/all")
-async def get_all_goods(session: AsyncSession = Depends(get_session),
-                        _: auth_schemas.UserInDB = Depends(auth_routes.get_authed_user)):
+async def get_all_goods(
+    session: AsyncSession = Depends(get_session),
+    _: auth_schemas.UserInDB = Depends(auth_routes.get_authed_user),
+):
     try:
         goods = await crud.crud_good.get_all(db=session)
     except Exception as err:
@@ -23,9 +25,9 @@ async def get_all_goods(session: AsyncSession = Depends(get_session),
 
 @router.get("/{good_id}")
 async def get_by_id(
-        good_id: int,
-        session: AsyncSession = Depends(get_session),
-        _: auth_schemas.UserInDB = Depends(auth_routes.get_authed_user)
+    good_id: int,
+    session: AsyncSession = Depends(get_session),
+    _: auth_schemas.UserInDB = Depends(auth_routes.get_authed_user),
 ):
     try:
         good_in_db = await crud.crud_good.get(db=session, id=good_id)
@@ -40,16 +42,18 @@ async def get_by_id(
 
 @router.put("/{good_id}")
 async def update_good_by_id(
-        good_id: int,
-        good_update: schemas.GoodUpdate,
-        session: AsyncSession = Depends(get_session),
-        _: auth_schemas.UserInDB = Depends(auth_routes.get_authed_user)
+    good_id: int,
+    good_update: schemas.GoodUpdate,
+    session: AsyncSession = Depends(get_session),
+    _: auth_schemas.UserInDB = Depends(auth_routes.get_authed_user),
 ):
     """Update any good's fields"""
     try:
-        new_db_good = await service.good_service.update_data(session, good_id, new_good=good_update)
+        new_db_good = await service.good_service.update_data(
+            session, good_id, new_good=good_update
+        )
     except Exception as err:
-        logger.log(f"{datetime.now()} - err while update god - {err}")
+        logger.log(f"{datetime.now()} - err while update good - {err}")
         if isinstance(err, HTTPException):
             raise err
         else:
@@ -59,9 +63,9 @@ async def update_good_by_id(
 
 @router.delete("/{good_id")
 async def delete_good(
-        good_id: int,
-        session: AsyncSession = Depends(get_session),
-        _: auth_schemas.UserInDB = Depends(auth_routes.get_authed_user)
+    good_id: int,
+    session: AsyncSession = Depends(get_session),
+    _: auth_schemas.UserInDB = Depends(auth_routes.get_authed_user),
 ):
     """
     delete good by id

@@ -1,8 +1,8 @@
 from datetime import datetime
 
 from app.src.base import Base
-from sqlalchemy import Column, Integer, Text, ForeignKey, DateTime, func
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Column, Integer, Text, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
 
 
 class User(Base):

@@ -50,7 +50,9 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         :return: user
         """
         logger.log(f"token - {token}")
-        token = await crud_token.get_by_access_token(session=session, access_token=token)
+        token = await crud_token.get_by_access_token(
+            session=session, access_token=token
+        )
 
         logger.log(f"{datetime.now()} - get user by token {token}")
         db_user = (
