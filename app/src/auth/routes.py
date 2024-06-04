@@ -25,7 +25,7 @@ async def get_authed_user(
     user: schemas.UserInDB = Depends(get_user),
 ) -> schemas.UserInDB:
     if not user:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
     return user
 
 
@@ -43,7 +43,7 @@ async def register(
             full_name=full_name, email=email, username=username, password=password
         )
     except WeakPassword:
-        raise HTTPException(400, "weak password")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "weak password")
 
     password_hash = service.auth_service.get_password_hash(user.password)
     user_dict = user.dict()
@@ -89,7 +89,6 @@ async def login_post(
     logger.log(
         f"{datetime.now()} - (auth.routes) Login post - {user.__dict__} - {access_token}"
     )
-    logger.log(f"token =={token}")
     return {"access_token": token.token, "token_type": "bearer"}
 
 
@@ -103,15 +102,15 @@ async def login_by_token(
         )
     except Exception as err:
         logger.log(f"{datetime.now()} - (auth.routes) token post - {token} - {err}")
-        raise HTTPException(500, f"some exception was accused {err}")
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"some exception was accused")
     if token is not None:
         db_user: schemas.UserInDB = await crud.crud_user.get_by_token(
             session=session, token=token
         )
     else:
-        raise HTTPException(400, "Undefined token")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Undefined token")
     if db_user is None:
-        raise HTTPException(400, "User not found")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "User not found")
     return db_user
 
 
@@ -121,5 +120,5 @@ async def delete_user(user_id: int, session: AsyncSession = Depends(get_session)
         await service.crud_user.remove(db=session, id=user_id)
     except Exception as err:
         logger.log(f"{datetime.now()} - (auth.routes) Login post - {user_id} - {err}")
-        raise HTTPException(500, f"some exception was accused {err}")
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"some exception was accused")
     return {"status": "ok"}
