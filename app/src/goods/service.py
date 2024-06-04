@@ -57,7 +57,9 @@ class GoodService:
             except Exception as err:
                 logger.log(f"{datetime.datetime.now()} - error while update good {err}")
                 raise err
-            logger.log(f"{datetime.datetime.now()} - updated data for good to {new_db_good.__dict__}")
+            logger.log(
+                f"{datetime.datetime.now()} - updated data for good to {new_db_good.__dict__}"
+            )
             return new_db_good
         else:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found")

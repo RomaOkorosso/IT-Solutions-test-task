@@ -79,7 +79,9 @@ async def delete_good(
         if isinstance(err, HTTPException):
             raise err
         else:
-            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Undefined error")
+            raise HTTPException(
+                status.HTTP_500_INTERNAL_SERVER_ERROR, "Undefined error"
+            )
     if db_good is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found")
     else:
@@ -87,5 +89,7 @@ async def delete_good(
             deleted_good = await crud.crud_good.remove(db=session, id=good_id)
         except Exception as err:
             logger.log(f"{datetime.now()} - error while deleting good - {err}")
-            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Undefiled error")
+            raise HTTPException(
+                status.HTTP_500_INTERNAL_SERVER_ERROR, "Undefiled error"
+            )
         return {"deleted_item": deleted_good, "status": True}
