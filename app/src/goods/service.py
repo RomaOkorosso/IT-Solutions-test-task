@@ -2,6 +2,7 @@ import datetime
 
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette import status
 
 from app.src.base.db.session import get_session_
 from app.src.goods import crud, models, schemas
@@ -56,9 +57,10 @@ class GoodService:
             except Exception as err:
                 logger.log(f"{datetime.datetime.now()} - error while update good {err}")
                 raise err
+            logger.log(f"{datetime.datetime.now()} - updated data for good to {new_db_good.__dict__}")
             return new_db_good
         else:
-            raise HTTPException(404, "Item not found")
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found")
 
 
 good_service = GoodService()
