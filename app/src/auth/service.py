@@ -178,6 +178,7 @@ class AuthService:
                 return None
             token_data = TokenData(username=username, access_token=access_token)
         except JWTError as e:
+            logger.log(f"{datetime.now()} - error in jwt - {e}")
             return None
 
         user = await crud_user.get_user_by_username(

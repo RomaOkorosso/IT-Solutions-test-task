@@ -105,7 +105,7 @@ async def login_by_token(
     except Exception as err:
         logger.log(f"{datetime.now()} - (auth.routes) token post - {token} - {err}")
         raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, f"some exception was accused"
+            status.HTTP_500_INTERNAL_SERVER_ERROR, "some exception was accused"
         )
     if token is not None:
         db_user: schemas.UserInDB = await crud.crud_user.get_by_token(
@@ -125,6 +125,6 @@ async def delete_user(user_id: int, session: AsyncSession = Depends(get_session)
     except Exception as err:
         logger.log(f"{datetime.now()} - (auth.routes) Login post - {user_id} - {err}")
         raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, f"some exception was accused"
+            status.HTTP_500_INTERNAL_SERVER_ERROR, "some exception was accused"
         )
     return {"status": "ok"}

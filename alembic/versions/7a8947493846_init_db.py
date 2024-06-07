@@ -4,13 +4,12 @@ Revision ID: 7a8947493846
 Revises: 
 Create Date: 2024-06-03 14:54:56.801303
 
-"""
+"""  # noqa
 
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision: str = "7a8947493846"
