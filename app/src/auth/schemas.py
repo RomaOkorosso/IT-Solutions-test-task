@@ -46,6 +46,7 @@ class UserInDB(BaseUser):
 class TokenBase(BaseModel):
     access_token: str
     token_type: str
+    expire_at: Optional[datetime] = None
 
 
 class TokenCreate(TokenBase):

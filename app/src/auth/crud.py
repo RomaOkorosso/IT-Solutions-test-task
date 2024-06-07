@@ -94,5 +94,31 @@ class CRUDToken(CRUDBase[Token, TokenCreate, TokenUpdate]):
         await session.commit()
         return
 
+    async def create_or_pass(self, session: AsyncSession, *, obj_in: Token) -> Token:
+        """
+
+        :param session:
+        :param obj_in:
+        :return:
+        """
+        logger.log(f"{datetime.now()} - create or pass token")
+
+        old_token = (
+            await session.execute(
+                select(self.model)
+                .where(self.model.user_id == obj_in.user_id)
+                .where(self.model.expire_at > datetime.utcnow())
+                .order_by(self.model.expire_at)
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+        if not old_token:
+            return await self.create(db=session, obj_in=obj_in)
+        else:
+            logger.log(f"{datetime.now()} - old_token - {old_token.__dict__}")
+
+        return old_token
+
 
 crud_token = CRUDToken(Token)

@@ -142,7 +142,9 @@ class AuthService:
         return access_token
 
     @staticmethod
-    async def create_token(session: AsyncSession, username: str, access_token: str):
+    async def create_token_or_pass(
+        session: AsyncSession, username: str, access_token: str
+    ):
         """
         create token and fill it into db
         :param session: AsyncSession
@@ -156,7 +158,7 @@ class AuthService:
         )
         token = Token(user_id=db_user.id, token=access_token)
         logger.log(f"{datetime.now()} - create token - {token}")
-        return await crud_token.create(db=session, obj_in=token)
+        return await crud_token.create_or_pass(session=session, obj_in=token)
 
     @staticmethod
     async def get_username_from_token(
