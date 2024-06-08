@@ -7,7 +7,7 @@ from logger import logger
 from app.src.auth import schemas, service, models, crud
 from app.src.auth.crud import crud_token
 from app.src.auth.models import Token
-from app.src.base import get_session
+from app.src.base import get_session, exceptions
 from app.src.base.exceptions import WeakPassword
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -51,14 +51,23 @@ async def register(
     user_dict = user.dict()
     user_dict["password"] = password_hash
     new_user = models.User(**user_dict)
-    new_user: models.User = await crud.crud_user.create(db=session, obj_in=new_user)
+
+    # try to create new user, if exists raise
+    try:
+        new_user: models.User = await service.auth_service.register_user(
+            session=session, new_user=new_user
+        )
+    except exceptions.UserAlreadyExists:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists"
+        )
 
     access_token = service.auth_service.create_access_token(
         {"username": new_user.username}
     )
 
     # Save access token in database
-    await service.auth_service.create_token(
+    await service.auth_service.create_token_or_pass(
         session=session, username=new_user.username, access_token=access_token
     )
 
