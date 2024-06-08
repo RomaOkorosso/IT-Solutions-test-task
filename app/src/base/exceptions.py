@@ -99,3 +99,7 @@ class Unauthorized(Exception):
 
 class CommandRun(Exception):
     pass
+
+
+class UserAlreadyExists(Exception):
+    pass

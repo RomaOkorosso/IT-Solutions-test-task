@@ -7,7 +7,7 @@ from logger import logger
 from app.src.auth import schemas, service, models, crud
 from app.src.auth.crud import crud_token
 from app.src.auth.models import Token
-from app.src.base import get_session
+from app.src.base import get_session, exceptions
 from app.src.base.exceptions import WeakPassword
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -38,7 +38,7 @@ async def register(
     username: str = Form(...),
     password: str = Form(...),
     session: AsyncSession = Depends(get_session),
-):
+) -> schemas.TokenBase:
     logger.log(f"{datetime.now()} - (auth.routes) Register post")
     try:
         user = schemas.UserCreate(
@@ -51,14 +51,23 @@ async def register(
     user_dict = user.dict()
     user_dict["password"] = password_hash
     new_user = models.User(**user_dict)
-    new_user: models.User = await crud.crud_user.create(db=session, obj_in=new_user)
+
+    # try to create new user, if exists raise
+    try:
+        new_user: models.User = await service.auth_service.register_user(
+            session=session, new_user=new_user
+        )
+    except exceptions.UserAlreadyExists:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists"
+        )
 
     access_token = service.auth_service.create_access_token(
         {"username": new_user.username}
     )
 
     # Save access token in database
-    await service.auth_service.create_token(
+    await service.auth_service.create_token_or_pass(
         session=session, username=new_user.username, access_token=access_token
     )
 
@@ -66,14 +75,14 @@ async def register(
         f"{datetime.now()} - (auth.routes) Register post - {new_user.__dict__} - {access_token}"
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return schemas.TokenBase(access_token=access_token, token_type="bearer")
 
 
 @router.post("/login")
-async def login_post(
+async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: AsyncSession = Depends(get_session),
-):
+) -> schemas.TokenBase:
     logger.log(f"{datetime.now()} - (auth.routes) Login post")
     user = await service.auth_service.authenticate_user(
         username=form_data.username, password=form_data.password, session=session
@@ -84,38 +93,17 @@ async def login_post(
             detail="Invalid username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = service.auth_service.create_access_token(data={"sub": user.username})
+    access_token = service.auth_service.create_access_token(
+        data={"sub": user.username, "user_id": user.id}
+    )
     token = Token(token=access_token, user_id=user.id)
-    await crud_token.create(session, obj_in=token)
+    logger.log(f"{datetime.now()} - pre create_or_pass token - {token.__dict__}")
+    await crud_token.create_or_pass(session, obj_in=token)
 
     logger.log(
         f"{datetime.now()} - (auth.routes) Login post - {user.__dict__} - {access_token}"
     )
-    return {"access_token": token.token, "token_type": "bearer"}
-
-
-@router.post("/token")
-async def login_by_token(
-    token: schemas.TokenBase, session: AsyncSession = Depends(get_session)
-) -> schemas.UserInDB:
-    try:
-        token = await service.crud_token.get_by_access_token(
-            session=session, access_token=token.access_token
-        )
-    except Exception as err:
-        logger.log(f"{datetime.now()} - (auth.routes) token post - {token} - {err}")
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, "some exception was accused"
-        )
-    if token is not None:
-        db_user: schemas.UserInDB = await crud.crud_user.get_by_token(
-            session=session, token=token
-        )
-    else:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Undefined token")
-    if db_user is None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "User not found")
-    return db_user
+    return schemas.TokenBase(access_token=access_token, token_type="bearer")
 
 
 @router.delete("/delete_user/{user_id}")

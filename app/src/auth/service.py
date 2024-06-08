@@ -23,6 +23,22 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 class AuthService:
     @staticmethod
+    async def register_user(session: AsyncSession, new_user: User) -> User:
+        """
+        try to register new user
+        :param session: AsyncSession
+        :param new_user: models.User
+        :return: models.User
+        """
+        old_user: User = await crud_user.get_user_by_username(
+            session=session, username=new_user.username
+        )
+        if old_user:
+            raise exceptions.UserAlreadyExists
+
+        return await crud_user.create(db=session, obj_in=new_user)
+
+    @staticmethod
     async def get_current_user(
         session: AsyncSession = Depends(get_session),
         token: str = Depends(oauth2_scheme),
@@ -142,7 +158,9 @@ class AuthService:
         return access_token
 
     @staticmethod
-    async def create_token(session: AsyncSession, username: str, access_token: str):
+    async def create_token_or_pass(
+        session: AsyncSession, username: str, access_token: str
+    ):
         """
         create token and fill it into db
         :param session: AsyncSession
@@ -156,7 +174,7 @@ class AuthService:
         )
         token = Token(user_id=db_user.id, token=access_token)
         logger.log(f"{datetime.now()} - create token - {token}")
-        return await crud_token.create(db=session, obj_in=token)
+        return await crud_token.create_or_pass(session=session, obj_in=token)
 
     @staticmethod
     async def get_username_from_token(
