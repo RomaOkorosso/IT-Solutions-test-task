@@ -63,7 +63,7 @@ async def update_good_by_id(
     return new_db_good
 
 
-@router.delete("/{good_id")
+@router.delete("/{good_id}")
 async def delete_good(
     good_id: int,
     session: AsyncSession = Depends(get_session),
